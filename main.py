@@ -17,6 +17,7 @@ class Main:
         for events in event.get():
             if(events.type == QUIT):
                 self.running = False
+            self.currentScreen.handleEvent(events)
 
     def draw(self):
         self.currentScreen.draw()
