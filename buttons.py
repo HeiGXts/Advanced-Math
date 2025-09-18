@@ -2,14 +2,14 @@ from pygame import *
 from globals import *
 
 class Button:
-    def __init__(self, app, co, size, colors, borderColor, width, radius, text, action):
+    def __init__(self, app, co, size, colors, border, radius, text, action):
         self.app = app
         self.rect = Rect(0, 0, size[0], size[1])
         self.rect.center = (co[0], co[1])
         self.colors = colors
         self.cIndex = 0
-        self.borderColor = borderColor
-        self.width = width
+        self.borderColor = border[0]
+        self.width = border[1]
         self.radius = radius
         self.action = action
         self.text = fonts(text[1], text[2], text[3], text[4]).render(text[0], True, text[5])
