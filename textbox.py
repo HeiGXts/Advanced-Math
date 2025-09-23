@@ -31,13 +31,13 @@ class TextBox:
 
         if(event.type == KEYDOWN):
             self.key = event.unicode
-            if((self.key.isdigit() or self.key.isalpha() or self.key == '+' or self.key == '-' or self.key == '*' or self.key == '/' 
-               or self.key == '(' or self.key == ')' or self.key == '!' or self.key == '=' or self.key == '^' or self.key == '%') 
+            if((self.key.isdigit() or self.key.isalpha() or self.key == '+' or self.key == '-' or self.key == '*' or self.key == '/' or self.key == '(' or self.key == ')' 
+                or self.key == '!' or self.key == '=' or self.key == '^' or self.key == '%' or self.key == '.') 
                and self.textRect.right < self.rect.right - self.app.unit // 8):
                 self.input += self.key
             if(event.key == K_BACKSPACE):
                 self.input = self.input[:-1]
             self.text = fonts(self.textSetting[0], self.textSetting[1], self.textSetting[2], self.textSetting[3]).render(self.input, True, self.textSetting[4])
             self.textRect = self.text.get_rect()
-            print(self.textRect.right, self.rect.right)
+            #print(self.textRect.right, self.rect.right)
             self.textRect.midleft = (self.co[0] + self.app.unit // 8, self.co[1] + self.size[1] // 2)
