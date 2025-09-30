@@ -8,6 +8,7 @@ class Main:
         self.width = 1280
         self.height = 800
         self.unit = 80
+        self.font = Arial
         self.screen = display.set_mode((self.width, self.height))
         self.currentScreen = HomeScreen(self)
         self.running = True

@@ -32,7 +32,7 @@ class TextBox:
         if(event.type == KEYDOWN):
             self.key = event.unicode
             if((self.key.isdigit() or self.key.isalpha() or self.key == '+' or self.key == '-' or self.key == '*' or self.key == '/' or self.key == '(' or self.key == ')' 
-                or self.key == '!' or self.key == '=' or self.key == '^' or self.key == '%' or self.key == '.') 
+                or self.key == '!' or self.key == '=' or self.key == '^' or self.key == '%' or self.key == '.' or self.key =='|') 
                and self.textRect.right < self.rect.right - self.app.unit // 8):
                 self.input += self.key
             if(event.key == K_BACKSPACE):
