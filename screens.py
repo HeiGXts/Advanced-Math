@@ -38,7 +38,7 @@ class GraphingCalculator:
                                  ("←", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.toHomeScreen())
         self.enterButton1 = Button(app, (app.unit * 14.5, app.unit * 2), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
                                   ("Enter", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.calculate())
-        self.enterButton2 = Button(app, (app.unit * 8.5, app.unit * 2.5), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
+        self.enterButton2 = Button(app, (app.unit * 10, app.unit * 3), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
                                   ("Enter", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.calculate())
         self.buttons = [self.backButton, self.enterButton1]
         self.textBox1 = TextBox(app, (app.unit * 4, app.unit), (app.unit * 11, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
@@ -56,9 +56,11 @@ class GraphingCalculator:
         self.maxY = 20
         self.gridSize = (self.maxX - self.minX) // 20
         self.variable = ''
+        self.graphPoints = 240
+        self.graph = [0 for i in range(self.graphPoints)]
 
-        self.searchRange = (-100000, 100000)
-        self.searchSteps = 5000
+        self.searchRange = self.app.searchRange
+        self.searchSteps = self.app.searchSteps
 
     def draw(self):
         self.app.screen.fill(White)
@@ -135,7 +137,6 @@ class GraphingCalculator:
         equation = self.processEquation(equation)
         if(equation == None):
             return
-        print(equation)
         try:
             return eval(equation)
         except Exception as e:
@@ -146,7 +147,6 @@ class GraphingCalculator:
         index = 0
         length = len(equation)
         while index < length:
-            print(equation)
             if(equation[index] == '^'):
                 equation = self.power(equation, index)
                 length = len(equation)
@@ -161,19 +161,34 @@ class GraphingCalculator:
         
 
     def processAlpha(self, equation):
-        for char in equation:
-            if(char.isalpha() and char != 'x' and char != 'y'):
-                if(not self.variable):
-                    self.variable = char
-                elif(self.variable != char):
-                    self.printResult("Error: MoreThanOneUnknown")
+        index = 0
+        length = len(equation)
+        self.searchRange = self.app.searchRange
+        self.searchSteps = self.app.searchSteps
+        while index < length:
+            if(equation[index].isalpha()):
+                if(equation[index] != 'x' and equation[index] != 'y'):
+                    if(not self.variable):
+                        self.variable = equation[index]
+                    elif(self.variable != equation[index]):
+                        self.printResult("Error: MoreThanOneUnknown")
+                        return
+                if(index != 0 and equation[index - 1].isdigit()):
+                    equation = equation[:index] + "*" + equation[index:]
+                    length += 1
+                if(index != length - 1 and equation[index + 1].isdigit()):
+                    self.printResult("Error: SyntaxError")
                     return
+            index += 1
                 
         if(self.variable and ('x' in equation or 'y' in equation)):
             self.textBox.append(self.textBox2)
             self.buttons.append(self.enterButton2)
-        elif(self.variable):
+        elif(self.variable and '=' in equation):
             self.solveForVar(equation, self.variable)
+        elif(self.variable):
+            self.textBox.append(self.textBox2)
+            self.buttons.append(self.enterButton2)
         else:
             self.solveEquation(equation)
         
@@ -182,6 +197,7 @@ class GraphingCalculator:
         if('y' in equation and 'x' in equation):
             if('=' in equation):
                 self.displayingGraph = True
+                self.calculateGraph(equation)
             else:
                 self.printResult("Error: MoreThanOneUnknown")
         elif('x' in equation):
@@ -189,6 +205,7 @@ class GraphingCalculator:
                 self.solveForVar(equation, 'x')
             else:
                 self.displayingGraph = True
+                self.calculateGraph("y=" + equation)
         elif('y' in equation):
             if('=' in equation):
                 self.solveForVar(equation, 'y')
@@ -209,7 +226,6 @@ class GraphingCalculator:
             try:
                 return eval(left, {var: x}) - eval(right, {var: x})
             except:
-                self.printResult("Error: EquationSolveError")
                 return float("nan")
         
         def bisection(x1, x2):
@@ -234,6 +250,10 @@ class GraphingCalculator:
                 if(not any(abs(root - r) < 1e-5 for r in roots)):
                     roots.append(round(root, 6))
             x += step
+
+        if(roots == [] and not self.displayingGraph):
+            self.printResult("No Root Found")
+            return
 
         if(self.displayingGraph):
             return roots
@@ -315,25 +335,36 @@ class GraphingCalculator:
             else:
                 draw.line(self.app.screen, Black, (self.app.unit * 5 + self.app.unit * 0.3 * i, self.app.unit * 3.5), 
                         (self.app.unit * 5 + self.app.unit * 0.3 * i, self.app.unit * 9.5), width = self.app.unit // 20)
+                
+    
+    def calculateGraph(self, equation):
+        self.searchRange = (self.minY, self.maxY)
+        self.searchSteps = min(30 * (self.maxY - self.minY), self.app.searchSteps)
+        step = (self.maxX - self.minX) / self.graphPoints
+        thisEquation = 0
+        for i in range(self.graphPoints):
+            index = 0
+            while 'x' in equation and index < len(equation):
+                if(equation[index] == 'x'):
+                    try:
+                        thisEquation = equation[:index] + f"({self.minX + i * step})" + equation[index + 1:]
+                    except:
+                        thisEquation = equation[:index] + f"({self.minX + i * step})"
+                index += 1
+            self.graph[i] = self.solveForVar(thisEquation, 'y')
+            print(self.graph[i])
+        print(self.graph)
 
 
     def drawGraph(self):
-        equation = self.textBox[0].input
-        step = (self.maxX - self.minX) / 100
         index = 0
-
-        for i in range(100):
-            while 'x' in equation:
-                if(equation[index] == 'x'):
-                    if(index < len(equation) - 1 and equation[index + 1].isdigit()):
-                        self.printResult("Error: SyntaxError")
-                        return
-                    if(index != 0 and equation[index - 1].isdigit()):
-                        try:
-                            equation = equation[:index - 1] + '*' + str(self.minX + i * step) + equation[index + 1:]
-                        except:
-                            equation = equation[:index - 1] + '*' + str(self.minX + i * step)
-                index += 1
+        while index < self.graphPoints:
+            for root in self.graph[index]:
+                draw.circle(self.app.screen, Red, 
+                            (self.app.unit * 5 + index * round(self.app.unit * 6 / self.graphPoints), 
+                             self.app.unit * 3.5 + round((self.maxY - root) / (self.maxY - self.minY) * self.app.unit * 6)), 
+                             max(1, self.app.unit // 40))
+            index += 1
 
 
     def toHomeScreen(self):

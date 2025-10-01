@@ -15,6 +15,9 @@ class Main:
         self.frame = 60
         self.clock = time.Clock()
 
+        self.searchRange = (-100000, 100000)
+        self.searchSteps = 10000
+
     def handleEvent(self):
         for events in event.get():
             if(events.type == QUIT):
