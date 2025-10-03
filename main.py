@@ -33,7 +33,6 @@ class Main:
             self.handleEvent()
             self.draw()
             self.clock.tick(self.frame)
-
         quit()
         exit()
 

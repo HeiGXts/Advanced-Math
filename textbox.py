@@ -29,7 +29,7 @@ class TextBox:
             else:
                 self.color = self.border[0]
 
-        if(event.type == KEYDOWN):
+        if(event.type == KEYDOWN and self.entering):
             self.key = event.unicode
             if((self.key.isdigit() or self.key.isalpha() or self.key == '+' or self.key == '-' or self.key == '*' or self.key == '/' or self.key == '(' or self.key == ')' 
                 or self.key == '!' or self.key == '=' or self.key == '^' or self.key == '%' or self.key == '.' or self.key =='|') 

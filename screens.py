@@ -37,13 +37,13 @@ class GraphingCalculator:
         self.backButton = Button(app, (app.unit * 0.6, app.unit * 0.6), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 5, 
                                  ("←", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.toHomeScreen())
         self.enterButton1 = Button(app, (app.unit * 14.5, app.unit * 2), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
-                                  ("Enter", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.calculate())
-        self.enterButton2 = Button(app, (app.unit * 10, app.unit * 3), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
-                                  ("Enter", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.calculate())
+                                  ("Enter", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.calculate(self.textBox[0].input))
+        self.enterButton2 = Button(app, (app.unit * 9.5, app.unit * 2.8), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
+                                  ("Enter", self.app.font, app.unit * 0.3, False, False, Black), lambda: self.substitueVariable())
         self.buttons = [self.backButton, self.enterButton1]
         self.textBox1 = TextBox(app, (app.unit * 4, app.unit), (app.unit * 11, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
                                    (self.app.font, app.unit * 0.3, False, False, Black))
-        self.textBox2 = TextBox(app, (app.unit * 4.5, app.unit * 2.5), (app.unit * 4, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
+        self.textBox2 = TextBox(app, (app.unit * 4.8, app.unit * 2.5), (app.unit * 4, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
                                    (self.app.font, app.unit * 0.3, False, False, Black))
         self.textBox = [self.textBox1]
         self.result = 0
@@ -56,8 +56,9 @@ class GraphingCalculator:
         self.maxY = 20
         self.gridSize = (self.maxX - self.minX) // 20
         self.variable = ''
-        self.graphPoints = 240
-        self.graph = [0 for i in range(self.graphPoints)]
+        self.graphPoints = 120
+        self.graphX = [0 for i in range(self.graphPoints)]
+        self.graphY = [0 for i in range(self.graphPoints)]
 
         self.searchRange = self.app.searchRange
         self.searchSteps = self.app.searchSteps
@@ -76,6 +77,12 @@ class GraphingCalculator:
 
         self.drawGrid()
 
+        if(self.variable):
+            message = fonts(self.app.font, self.app.unit * 0.3, True, False).render(f"{self.variable} =", True, Black)
+            messageRect = message.get_rect()
+            messageRect.midleft = (self.app.unit * 4, self.app.unit * 2.8)
+            self.app.screen.blit(message, messageRect)
+
         if(self.displayingGraph):
             self.drawGraph()
 
@@ -88,17 +95,19 @@ class GraphingCalculator:
             textbox.handleEvent(event)
 
         if(event.type == KEYDOWN and event.key == K_RETURN):
-            if(self.textBox[0].entering == True):
-                self.calculate()
+            if(self.textBox[0].entering):
+                self.calculate(self.textBox[0].input)
+            if(len(self.textBox) > 1 and self.textBox[1].entering):
+                self.substitueVariable()
 
 
-    def calculate(self):
-        equation = self.textBox[0].input
+    def calculate(self, equation):
         self.variable = ''
+        self.textBox2.input = ''
         self.displayingGraph = False
         if(len(self.textBox) == 2):
             self.textBox.pop(1)
-            self.buttons.pop(1)
+            self.buttons.pop(2)
         if(equation == ""):
             self.result = 0
             return
@@ -191,6 +200,40 @@ class GraphingCalculator:
             self.buttons.append(self.enterButton2)
         else:
             self.solveEquation(equation)
+
+    
+    def substitueVariable(self):
+        equation = self.textBox[0].input
+        variable = self.textBox[1].input
+        index = 0
+
+        for char in variable:
+            if(char.isalpha() and char != 'x' and char != 'y' and '=' not in equation):
+                self.printResult("Error:MoreThanOneUnknown")
+                return
+
+        while self.variable in equation and index < len(equation):
+            if(equation[index] == self.variable):
+                if(index != 0 and index != len(equation) - 1):
+                    if(equation[index - 1].isdigit()):
+                        equation = equation[:index] + "*" + equation[index:]
+                        index += 1
+                    if(equation[index + 1].isdigit()):
+                        self.printResult("Error: SyntaxError")
+                        return
+                    equation = equation[:index] + f"({variable})" + equation[index + 1:]
+                elif(index == len(equation) - 1):
+                    if(equation[index - 1].isdigit()):
+                        equation = equation[:index] + "*" + equation[index:]
+                        index += 1
+                    equation = equation[:index] + f"({variable})"
+                else:
+                    if(equation[index + 1].isdigit()):
+                        self.printResult("Error: SyntaxError")
+                        return
+                    equation = f"({variable})" + equation[index + 1:]
+            index += 1
+        self.calculate(equation)
         
 
     def solveEquation(self, equation):
@@ -253,6 +296,9 @@ class GraphingCalculator:
 
         if(roots == [] and not self.displayingGraph):
             self.printResult("No Root Found")
+            return
+        elif(len(roots) == self.searchSteps and not self.displayingGraph):
+            self.printResult("Cannot Converge")
             return
 
         if(self.displayingGraph):
@@ -341,28 +387,49 @@ class GraphingCalculator:
         self.searchRange = (self.minY, self.maxY)
         self.searchSteps = min(30 * (self.maxY - self.minY), self.app.searchSteps)
         step = (self.maxX - self.minX) / self.graphPoints
-        thisEquation = 0
         for i in range(self.graphPoints):
             index = 0
-            while 'x' in equation and index < len(equation):
-                if(equation[index] == 'x'):
-                    try:
-                        thisEquation = equation[:index] + f"({self.minX + i * step})" + equation[index + 1:]
-                    except:
-                        thisEquation = equation[:index] + f"({self.minX + i * step})"
+            xEquation = equation
+            while 'x' in xEquation and index < len(xEquation):
+                if(xEquation[index] == 'x'):
+                    if(index != 0 and index != len(xEquation) - 1):
+                        xEquation = xEquation[:index] + f"({self.minX + i * step})" + xEquation[index + 1:]
+                    elif(index == len(equation) - 1):
+                        xEquation = xEquation[:index] + f"({self.minX + i * step})"
+                    else:
+                        xEquation = f"({self.minX + i * step})" + xEquation[index + 1:]
                 index += 1
-            self.graph[i] = self.solveForVar(thisEquation, 'y')
-            print(self.graph[i])
-        print(self.graph)
+            self.graphX[i] = self.solveForVar(xEquation, 'y')
+
+            index = 0
+            yEquation = equation
+            while 'y' in yEquation and index < len(yEquation):
+                if(yEquation[index] == 'y'):
+                    if(index != 0 and index != len(yEquation) - 1):
+                        yEquation = yEquation[:index] + f"({self.maxY - i * step})" + yEquation[index + 1:]
+                    elif(index == len(equation) - 1):
+                        yEquation = yEquation[:index] + f"({self.maxY - i * step})"
+                    else:
+                        yEquation = f"({self.maxY - i * step})" + yEquation[index + 1:]
+                index += 1
+            self.graphY[i] = self.solveForVar(yEquation, 'x')
+            print(self.graphX[i], self.graphY[i])
+        self.printResult("Graph Loaded")
 
 
     def drawGraph(self):
         index = 0
         while index < self.graphPoints:
-            for root in self.graph[index]:
+            for root in self.graphX[index]:
                 draw.circle(self.app.screen, Red, 
                             (self.app.unit * 5 + index * round(self.app.unit * 6 / self.graphPoints), 
                              self.app.unit * 3.5 + round((self.maxY - root) / (self.maxY - self.minY) * self.app.unit * 6)), 
+                             max(1, self.app.unit // 40))
+            
+            for root in self.graphY[index]:
+                draw.circle(self.app.screen, Red, 
+                            (self.app.unit * 8 + round(root / (self.maxX - self.minX) * self.app.unit * 6), 
+                             self.app.unit * 3.5 + index * round(self.app.unit * 6 / self.graphPoints)),
                              max(1, self.app.unit // 40))
             index += 1
 
