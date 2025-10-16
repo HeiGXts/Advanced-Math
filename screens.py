@@ -39,7 +39,7 @@ class GraphingCalculator:
         self.enterButton1 = Button(app, (app.unit * 14.5, app.unit * 2), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
                                   ("Enter", app.font, app.unit * 0.3, False, False, Black), lambda: self.calculate(self.textBox[0].input))
         self.enterButton2 = Button(app, (app.unit * 9.5, app.unit * 2.8), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
-                                  ("Enter", app.font, app.unit * 0.3, False, False, Black), lambda: self.substitueVariable())
+                                  ("Enter", app.font, app.unit * 0.3, False, False, Black), lambda: self.substituteVariable())
         self.buttons = [self.backButton, self.enterButton1]
         self.textBox1 = TextBox(app, (app.unit * 4, app.unit), (app.unit * 11, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
                                    (app.font, app.unit * 0.3, False, False, Black))
@@ -48,6 +48,7 @@ class GraphingCalculator:
         self.textBox = [self.textBox1]
         self.result = 0
         self.resultRect = 0
+        self.radMode = False
 
         self.displayingGraph = False
         self.minX = -20
@@ -98,7 +99,7 @@ class GraphingCalculator:
             if(self.textBox[0].entering):
                 self.calculate(self.textBox[0].input)
             if(len(self.textBox) > 1 and self.textBox[1].entering):
-                self.substitueVariable()
+                self.substituteVariable()
 
 
     def calculate(self, equation):
@@ -171,12 +172,36 @@ class GraphingCalculator:
         
 
     def processAlpha(self, equation):
+        hasAlpha = False
         index = 0
         length = len(equation)
         self.searchRange = self.app.searchRange
         self.searchSteps = self.app.searchSteps
         while index < length:
             if(equation[index].isalpha()):
+                if(length - index >= 3):
+                    isInverse = -1
+                    if(equation[index:index + 3] in Trig):
+                        isInverse = 0
+                        equation = self.substituteTrig(equation, index, 0)
+                    elif(length - index >= 6 and equation[index:index + 6] in InverseTrig):
+                        isInverse = 1
+                        equation = self.substituteTrig(equation, index, 1)
+                    if(isInverse != -1):
+                        if(equation == None):
+                            self.printResult("Error: SyntaxError")
+                            return
+                        print(equation)
+                        length = len(equation)
+                        index += 9 + 3 * isInverse
+                        if(not self.radMode):
+                            index += 13
+                        print(index)
+                        if(not equation[index].isalpha()):
+                            index += 1
+                            continue
+                
+                hasAlpha = True
                 if(equation[index] != 'x' and equation[index] != 'y'):
                     if(not self.variable):
                         self.variable = equation[index]
@@ -190,6 +215,9 @@ class GraphingCalculator:
                     self.printResult("Error: SyntaxError")
                     return
             index += 1
+        if(not hasAlpha):
+            self.printResult(str(round(self.calculateEquation(equation), 6)))
+            return
                 
         if(self.variable and '=' in equation and not('y' in equation or 'x' in equation)):
             self.solveForVar(equation, self.variable)
@@ -200,7 +228,59 @@ class GraphingCalculator:
             self.solveEquation(equation)
 
     
-    def substitueVariable(self):
+    def substituteTrig(self, equation, index, isInverse):
+        length = len(equation)
+        if(index + 3 + isInverse * 3 == length):
+            return
+        rad = ''
+        i = index + 4 + isInverse * 3
+        rad = equation[index + 3 + isInverse * 3:]
+        trig = ''
+        endIndex = length
+        if(isInverse):
+            trig = 'a' + equation[index + 3:index + 6]
+        else:
+            trig = equation[index:index + 3]
+
+        if(equation[index + 3 + isInverse * 3] == '('):
+            parantheses = 0
+            while i < length:
+                if(equation[i] == '('):
+                    parantheses += 1
+                elif(equation[i] == ')' and parantheses == 0):
+                    rad = equation[index + 3 + isInverse * 3:i]
+                    endIndex = i + 1
+                    break
+                elif(equation[i] == ')'):
+                    parantheses -= 1
+                i += 1
+            if(parantheses != 0):
+                return
+        elif(equation[index + 3 + isInverse * 3].isdigit()):
+            while i < length:
+                if(not equation[i].isdigit() and equation[i] != '.'):
+                    rad = equation[index + 3 + isInverse * 3:i]
+                    endIndex = i
+                    break
+                i += 1
+        elif(equation[index + 3 + isInverse * 3].isalpha()):
+            rad = equation[index + 3 + isInverse * 3]
+            endIndex = index + 5 + isInverse * 3
+        print(rad)
+        if(self.radMode):
+            try:
+                return equation[:index] + f"math.{trig}({rad})" + equation[endIndex:]
+            except:
+                return equation[:index] + f"math.{trig}({rad})"
+        else:
+            try:
+                return equation[:index] + f"math.{trig}(math.radians({rad}))" + equation[endIndex:]
+            except:
+                return equation[:index] + f"math.{trig}(math.radians({rad}))"
+                
+                
+    
+    def substituteVariable(self):
         equation = self.textBox[0].input
         variable = self.textBox[1].input
         index = 0
@@ -258,6 +338,7 @@ class GraphingCalculator:
         equalIndex = equation.index('=')
         left = self.processEquation(equation[:equalIndex])
         right = self.processEquation(equation[equalIndex + 1:])
+        print(left, right)
 
         roots = []
         lower, upper = self.searchRange

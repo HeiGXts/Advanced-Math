@@ -8,6 +8,9 @@ Red = (255, 0, 0)
 
 Arial = "Arial"
 
+Trig = ["sin", "cos", "tan"]
+InverseTrig = ["arcsin", "arccos", "arctan"]
+
 def fonts(fontType, size, bold, italic):
     font.init()
     thisFont = font.SysFont(fontType, int(size), bold = bold, italic = italic)
