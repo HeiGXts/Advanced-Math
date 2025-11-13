@@ -210,7 +210,7 @@ def processAlpha(self, equation):
         
         if(len(self.textBox) == 2):
             self.textBox.pop(1)
-            self.buttons.pop(7)        
+            self.buttons.pop(9)        
         if(self.variable and '=' in equation and not('y' in equation or 'x' in equation)):
             solveForVar(self, equation, self.variable)
         elif(self.variable):
@@ -297,7 +297,8 @@ def solveEquation(self, equation):
             if('=' in equation):
                 solveForVar(self, equation, 'y')
             else:
-                self.displayingGraph = True   
+                self.displayingGraph = True  
+                self.calculateGraph("x=" + equation)
             
 
 def checkSolution(self, solution, left, right, indeces):

@@ -17,6 +17,7 @@ class Main:
 
         self.searchRange = (-100000, 100000)
         self.searchSteps = 10000
+        self.graphingSteps = 10
 
     def handleEvent(self):
         for events in event.get():

@@ -54,7 +54,12 @@ class GraphingCalculator:
                                   ("→", app.font, app.unit * 0.3, False, False, Black), lambda: self.moveGraph((1, 0)))
         self.graphResetButton = Button(app, (app.unit * 13, app.unit * 5), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 8, 
                                   ("R", app.font, app.unit * 0.3, False, False, Black), lambda: self.resetGraph())
-        self.buttons = [self.backButton, self.enterButton1, self.graphMoveUp, self.graphMoveDown, self.graphMoveLeft, self.graphMoveRight, self.graphResetButton]
+        self.zoomIn = Button(app, (app.unit * 12.5, app.unit * 7), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 8, 
+                                  ("+", app.font, app.unit * 0.3, False, False, Black), lambda: self.zoom(True))
+        self.zoomOut = Button(app, (app.unit * 13.5, app.unit * 7), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 8, 
+                                  ("-", app.font, app.unit * 0.3, False, False, Black), lambda: self.zoom(False))
+        self.buttons = [self.backButton, self.enterButton1, self.graphMoveUp, self.graphMoveDown, self.graphMoveLeft, self.graphMoveRight, 
+                        self.graphResetButton, self.zoomIn, self.zoomOut]
         self.textBox1 = TextBox(app, (app.unit * 4, app.unit * 0.3), (app.unit * 11, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
                                    (app.font, app.unit * 0.3, False, False, Black))
         self.textBox2 = TextBox(app, (app.unit * 4.5, app.unit * 1.7), (app.unit * 4, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
@@ -78,6 +83,7 @@ class GraphingCalculator:
 
         self.searchRange = self.app.searchRange
         self.searchSteps = self.app.searchSteps
+        self.graphingSteps = self.app.graphingSteps
 
 
     def draw(self):
@@ -207,24 +213,24 @@ class GraphingCalculator:
         self.app.screen.blit(minY, minY.get_rect(center = (self.app.width // 2, self.app.unit * 8.9)))
         self.app.screen.blit(maxX, maxX.get_rect(center = (self.app.unit * 11.2, self.app.unit * 5.8)))
         self.app.screen.blit(minX, minX.get_rect(center = (self.app.unit * 4.8, self.app.unit * 5.8)))
+
         for i in range(21):
-            if(self.maxY - i * self.gridSize != 0):
-                draw.line(self.app.screen, Grey, (self.app.unit * 5, self.app.unit * 2.8 + self.app.unit * 0.3 * i), 
+            draw.line(self.app.screen, Grey, (self.app.unit * 5, self.app.unit * 2.8 + self.app.unit * 0.3 * i), 
                         (self.app.unit * 11, self.app.unit * 2.8 + self.app.unit * 0.3 * i), width = self.app.unit // 40)
-            else:
-                draw.line(self.app.screen, Black, (self.app.unit * 5, self.app.unit * 2.8 + self.app.unit * 0.3 * i), 
-                        (self.app.unit * 11, self.app.unit * 2.8 + self.app.unit * 0.3 * i), width = self.app.unit // 20)
             
-            if(self.minX + i * self.gridSize != 0):
-                draw.line(self.app.screen, Grey, (self.app.unit * 5 + self.app.unit * 0.3 * i, self.app.unit * 2.8), 
+            draw.line(self.app.screen, Grey, (self.app.unit * 5 + self.app.unit * 0.3 * i, self.app.unit * 2.8), 
                         (self.app.unit * 5 + self.app.unit * 0.3 * i, self.app.unit * 8.8), width = self.app.unit // 40)
-            else:
-                draw.line(self.app.screen, Black, (self.app.unit * 5 + self.app.unit * 0.3 * i, self.app.unit * 2.8), 
-                        (self.app.unit * 5 + self.app.unit * 0.3 * i, self.app.unit * 8.8), width = self.app.unit // 20)
+            
+        if(self.minY < 0 < self.maxY):
+            draw.line(self.app.screen, Black, (self.app.unit * 5, self.app.unit * 2.8 + round(self.app.unit * 6 * (self.maxY / (self.maxY - self.minY)))), 
+                        (self.app.unit * 11, self.app.unit * 2.8 + round(self.app.unit * 6 * (self.maxY / (self.maxY - self.minY)))), width = self.app.unit // 20)
+        if(self.minX < 0 < self.maxX):
+            draw.line(self.app.screen, Black, (self.app.unit * 5 + round(self.app.unit * 6 * (abs(self.minX) / (self.maxX - self.minX))), self.app.unit * 2.8), 
+                        (self.app.unit * 5 + round(self.app.unit * 6 * (abs(self.minX) / (self.maxX - self.minX))), self.app.unit * 8.8), width = self.app.unit // 20)
                 
     
     def calculateGraph(self, equation):
-        self.searchSteps = min(40 * (self.maxY - self.minY), self.app.searchSteps)
+        self.searchSteps = min(self.graphingSteps * (self.maxY - self.minY), self.app.searchSteps // 10)
         step = (self.maxX - self.minX) / self.graphPoints
         xIndeces = findVarIndeces(equation, 'x')
         yIndeces = findVarIndeces(equation, 'y')
@@ -259,27 +265,83 @@ class GraphingCalculator:
         deltaX, deltaY = delta
         deltaX *= 4
         deltaY *= 4
-        if(self.maxX - self.minX > 100):
-            deltaX *= 5
-            deltaY *= 5
+        if(self.maxX - self.minX >= 10000):
+            deltaX *= 50
+            deltaY *= 50
         elif(self.maxX - self.minX >= 1000):
-            deltaX *= 10
-            deltaY *= 10
-        elif(self.maxX - self.minX >= 10000):
             deltaX *= 20
             deltaY *= 20
+        elif(self.maxX - self.minX > 100):
+            deltaX *= 5
+            deltaY *= 5
         self.maxX += deltaX
         self.minX += deltaX
         self.maxY += deltaY
         self.minY += deltaY
         if(self.displayingGraph):
             self.calculate(self.textBox[0].input)
+            self.printResult("Graph Shifted")
+
+
+    def zoom(self, zoomIn):
+        size = self.maxX - self.minX
+        if(zoomIn):
+            if(size == 10):
+                return
+            if(size == 20):
+                self.maxX -= 5
+                self.maxY -= 5
+                self.minX += 5
+                self.minY += 5
+            elif(size <= 100):
+                self.maxX -= 10
+                self.maxY -= 10
+                self.minX += 10
+                self.minY += 10
+            elif(size <= 1000):
+                self.maxX -= 100
+                self.maxY -= 100
+                self.minX += 100
+                self.minY += 100
+            else:
+                self.maxX -= 1000
+                self.maxY -= 1000
+                self.minX += 1000
+                self.minY += 1000
+        else:
+            if(size == 10):
+                self.maxX += 5
+                self.maxY += 5
+                self.minX -= 5
+                self.minY -= 5
+            elif(size >= 100):
+                self.maxX += 100
+                self.maxY += 100
+                self.minX -= 100
+                self.minY -= 100
+            elif(size >= 1000):
+                self.maxX += 1000
+                self.maxY += 1000
+                self.minX -= 1000
+                self.minY -= 1000
+            else:
+                self.maxX += 10
+                self.maxY += 10
+                self.minX -= 10
+                self.minY -= 10
+        self.gridSize = (self.maxX - self.minX) // 20
+        if(self.displayingGraph):
+            self.calculate(self.textBox[0].input)
+            self.printResult("Graph Zoomed")
+            
 
 
     def resetGraph(self):
         self.maxX, self.minX, self.maxY, self.minY = 20, -20, 20, -20
+        self.gridSize = 2
         if(self.displayingGraph):
             self.calculate(self.textBox[0].input)
+            self.printResult("Graph Reset")
 
 
     def toHomeScreen(self):
