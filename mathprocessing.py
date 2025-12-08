@@ -210,7 +210,7 @@ def processAlpha(self, equation):
         
         if(len(self.textBox) == 2):
             self.textBox.pop(1)
-            self.buttons.pop(9)        
+            self.buttons.pop(10)        
         if(self.variable and '=' in equation and not('y' in equation or 'x' in equation)):
             solveForVar(self, equation, self.variable)
         elif(self.variable):

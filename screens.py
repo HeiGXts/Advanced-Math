@@ -58,8 +58,10 @@ class GraphingCalculator:
                                   ("+", app.font, app.unit * 0.3, False, False, Black), lambda: self.zoom(True))
         self.zoomOut = Button(app, (app.unit * 13.5, app.unit * 7), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 8, 
                                   ("-", app.font, app.unit * 0.3, False, False, Black), lambda: self.zoom(False))
+        self.toggleExtrema = Button(app, (app.unit * 3, app.unit * 3), (app.unit * 2, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 8, 
+                                  ("Extremas", app.font, app.unit * 0.3, False, False, Black), lambda: self.extrema())
         self.buttons = [self.backButton, self.enterButton1, self.graphMoveUp, self.graphMoveDown, self.graphMoveLeft, self.graphMoveRight, 
-                        self.graphResetButton, self.zoomIn, self.zoomOut]
+                        self.graphResetButton, self.zoomIn, self.zoomOut, self.toggleExtrema]
         self.textBox1 = TextBox(app, (app.unit * 4, app.unit * 0.3), (app.unit * 11, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
                                    (app.font, app.unit * 0.3, False, False, Black))
         self.textBox2 = TextBox(app, (app.unit * 4.5, app.unit * 1.7), (app.unit * 4, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
@@ -77,9 +79,13 @@ class GraphingCalculator:
         self.maxY = 20
         self.gridSize = (self.maxX - self.minX) // 20
         self.variable = 0
-        self.graphPoints = 125
+        self.graphPoints = 120
         self.graphX = [0 for i in range(self.graphPoints)]
         self.graphY = [0 for i in range(self.graphPoints)]
+
+        self.displayingExtremas = False
+        self.max = []
+        self.min = []
 
         self.searchRange = self.app.searchRange
         self.searchSteps = self.app.searchSteps
@@ -108,6 +114,33 @@ class GraphingCalculator:
 
         if(self.displayingGraph):
             self.drawGraph()
+            if(self.displayingExtremas):
+                messageMin = fonts(self.app.font, self.app.unit * 0.25, True, False).render("Min", True, Black)
+                messageMax = fonts(self.app.font, self.app.unit * 0.25, True, False).render("Max", True, Black)
+                minRect = messageMin.get_rect()
+                minRect.midtop = (self.app.unit * 2.2, self.app.unit * 3.5)
+                maxRect = messageMax.get_rect()
+                maxRect.midtop = (self.app.unit * 3.8, self.app.unit * 3.5)
+                self.app.screen.blit(messageMin, minRect)
+                self.app.screen.blit(messageMax, maxRect)
+                for i in range(len(self.min)):
+                    if(i < 15):
+                        messageMin = fonts(self.app.font, self.app.unit * 0.2, False, False).render(f"({round(self.min[i][0], 2)},{round(self.min[i][1], 2)})", True, Black)
+                        minRect.midtop = (self.app.unit * 2.2, self.app.unit * 4 + i * 0.5 * self.app.unit)
+                        self.app.screen.blit(messageMin, minRect)
+                    draw.circle(self.app.screen, Green, 
+                            (self.app.unit * 5 + round((self.min[i][0] - self.minX) / (self.maxX - self.minX) * self.app.unit * 6), 
+                             self.app.unit * 2.8 + round((self.maxY - self.min[i][1]) / (self.maxY - self.minY) * self.app.unit * 6)), 
+                             max(1, self.app.unit // 20))
+                for i in range(len(self.max)):
+                    if(i < 15):
+                        messageMax = fonts(self.app.font, self.app.unit * 0.2, False, False).render(f"({round(self.max[i][0], 2)},{round(self.max[i][1], 2)})", True, Black)
+                        maxRect.midtop = (self.app.unit * 3.8, self.app.unit * 4 + i * 0.5 * self.app.unit)
+                        self.app.screen.blit(messageMax, maxRect)
+                    draw.circle(self.app.screen, Blue, 
+                            (self.app.unit * 5 + round((self.max[i][0] - self.minX) / (self.maxX - self.minX) * self.app.unit * 6), 
+                             self.app.unit * 2.8 + round((self.maxY - self.max[i][1]) / (self.maxY - self.minY) * self.app.unit * 6)), 
+                             max(1, self.app.unit // 20))
 
 
     def handleEvent(self, event):
@@ -131,6 +164,9 @@ class GraphingCalculator:
             self.variable = 0
         self.result = 0
         self.displayingGraph = False
+        self.displayingExtremas = False
+        self.max = []
+        self.min = []
         self.textBox2 = TextBox(self.app, (self.app.unit * 4.5, self.app.unit * 1.7), (self.app.unit * 4, self.app.unit * 0.6), (DarkGrey, Black, self.app.unit // 16), 
                                    (self.app.font, self.app.unit * 0.3, False, False, Black))
         if(equation == ""):
@@ -242,8 +278,38 @@ class GraphingCalculator:
             self.searchRange = (self.minX, self.maxX)
             yEquation = substituteVarInEq(equation, yIndeces, self.maxY - i * step)
             self.graphY[i] = solveForVar(self, yEquation, 'x')
+
             print(self.graphX[i], self.graphY[i])
+            self.updateExtrema(self.graphX[i], self.graphY[i], self.minX + i * step, self.maxY - i * step)
+        self.min = list(set(self.min))
+        self.max = list(set(self.max))
         self.printResult("Graph Loaded")
+
+    
+    def updateExtrema(self, graphX, graphY, x, y):
+        for gx in graphX:
+            if(self.max == [] or self.max[0][1] < gx):
+                self.max = [(x, gx)]
+            elif(self.max[0][1] == gx):
+                self.max.append((x, gx))
+            
+            if(self.min == [] or self.min[0][1] > gx):
+                self.min = [(x, gx)]
+            elif(self.min[0][1] == gx):
+                self.min.append((x, gx))
+        
+        if(graphY != []):
+            if(self.max == [] or self.max[0][1] <= y):
+                if(self.max != [] and self.max[0][1] < y):
+                    self.max = []
+                for gy in graphY:
+                    self.max.append((gy, y))
+            
+            if(self.min == [] or self.min[0][1] >= y):
+                if(self.min != [] and self.min[0][1] > y):
+                    self.min = []
+                for gy in graphY:
+                    self.min.append((gy, y))
 
 
     def drawGraph(self):
@@ -263,15 +329,16 @@ class GraphingCalculator:
 
     def moveGraph(self, delta):
         deltaX, deltaY = delta
+        size = self.maxX - self.minX
         deltaX *= 4
         deltaY *= 4
-        if(self.maxX - self.minX >= 10000):
+        if(size >= 10000):
+            deltaX *= 250
+            deltaY *= 250
+        elif(size >= 1000):
             deltaX *= 50
             deltaY *= 50
-        elif(self.maxX - self.minX >= 1000):
-            deltaX *= 20
-            deltaY *= 20
-        elif(self.maxX - self.minX > 100):
+        elif(size > 100):
             deltaX *= 5
             deltaY *= 5
         self.maxX += deltaX
@@ -342,6 +409,12 @@ class GraphingCalculator:
         if(self.displayingGraph):
             self.calculate(self.textBox[0].input)
             self.printResult("Graph Reset")
+
+    
+    def extrema(self):
+        if(self.displayingGraph):
+            self.displayingExtremas = not self.displayingExtremas
+            print(self.min, self.max)
 
 
     def toHomeScreen(self):

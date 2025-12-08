@@ -29,5 +29,3 @@ class Button:
         
         if(event.type == MOUSEBUTTONDOWN and self.hovered and event.button == 1):
             self.action()
-
-

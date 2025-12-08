@@ -5,6 +5,8 @@ White = (255, 255, 255)
 Grey = (160, 160, 160)
 DarkGrey = (100, 100, 100)
 Red = (255, 0, 0)
+Green = (0, 255, 0)
+Blue = (0, 0, 255)
 
 Arial = "Arial"
 
