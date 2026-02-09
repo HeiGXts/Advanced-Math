@@ -8,11 +8,11 @@ from mathprocessing import *
 class HomeScreen:
     def __init__(self, app):
         self.app = app
-        self.algebraButton = Button(app, (app.width // 2, app.unit * 7), (app.unit * 2.2, app.unit * 0.8), (White, Grey), (Black, app.unit // 16), 5, 
-                                    ("Algebra", self.app.font, app.unit * 0.5, False, False, Black), lambda: self.toAlgebra())
+        self.menuButton = Button(app, (app.width // 2, app.unit * 7), (app.unit * 2.2, app.unit * 0.8), (White, Grey), (Black, app.unit // 16), 5, 
+                                    ("Start", self.app.font, app.unit * 0.5, False, False, Black), lambda: self.toMenu())
         self.quitButton = Button(app, (app.width // 2, app.unit * 8), (app.unit * 2.2, app.unit * 0.8), (White, Grey), (Black, app.unit // 16), 5, 
                                  ("Quit", self.app.font, app.unit * 0.5, False, False, Black), lambda: exit())
-        self.buttons = [self.algebraButton, self.quitButton]
+        self.buttons = [self.menuButton, self.quitButton]
         display.set_caption("Advanced Math Project")
 
 
@@ -30,8 +30,300 @@ class HomeScreen:
             button.handleEvent(event)
 
 
+    def toMenu(self):
+        self.app.currentScreen = MenuScreen(self.app)
+
+
+
+class MenuScreen:
+    def __init__(self, app):
+        self.app = app
+        self.backButton = Button(app, (app.unit * 0.6, app.unit * 0.6), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 5, 
+                                 ("←", app.font, app.unit * 0.3, False, False, Black), lambda: self.toHomeScreen())
+        self.algebraButton = Button(app, (app.width // 2, app.unit * 1.5), (app.unit * 4.5, app.unit * 0.8), (White, Grey), (Black, app.unit // 16), 5, 
+                                    ("Graphing Calculator", self.app.font, app.unit * 0.4, False, False, Black), lambda: self.toAlgebra())
+        self.matricesButton = Button(app, (app.width // 2, app.unit * 2.5), (app.unit * 4.5, app.unit * 0.8), (White, Grey), (Black, app.unit // 16), 5, 
+                                    ("Matrices", self.app.font, app.unit * 0.4, False, False, Black), lambda: self.toMatrices())
+        self.buttons = [self.backButton, self.algebraButton, self. matricesButton]
+
+
+    def draw(self):
+        self.app.screen.fill(White)
+        for button in self.buttons:
+            button.draw()
+
+
+    def handleEvent(self, event):
+        for button in self.buttons:
+            button.handleEvent(event)
+
+
+    def toHomeScreen(self):
+        self.app.currentScreen = HomeScreen(self.app)
+
+
     def toAlgebra(self):
         self.app.currentScreen = GraphingCalculator(self.app)
+
+
+    def toMatrices(self):
+        self.app.currentScreen = Matrices(self.app)
+
+
+
+class Matrices:
+    def __init__(self, app):
+        self.app = app
+        self.backButton = Button(app, (app.unit * 0.6, app.unit * 0.6), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 5, 
+                                 ("←", app.font, app.unit * 0.3, False, False, Black), lambda: self.toMenu())
+        self.AMButton = Button(app, (app.unit * 1.6, app.unit * 2), (app.unit * 2.2, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 5, 
+                                 ("Add/Minus", app.font, app.unit * 0.3, False, False, Black), lambda: self.changeMatrixMode(0))
+        self.SMButton = Button(app, (app.unit * 1.6, app.unit * 3), (app.unit * 2.2, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 5, 
+                                 ("Scalar Multiply", app.font, app.unit * 0.3, False, False, Black), lambda: self.changeMatrixMode(1))
+        self.MDButton = Button(app, (app.unit * 1.6, app.unit * 4), (app.unit * 2.2, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 5, 
+                                 ("Multiply/Divide", app.font, app.unit * 0.3, False, False, Black), lambda: self.changeMatrixMode(2))
+        self.enterButton = Button(app, (app.unit * 8.2, app.unit * 1), (app.unit * 1.2, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
+                                  ("Enter", app.font, app.unit * 0.3, False, False, Black), lambda: self.confirmDimension())
+        self.nextButton = Button(app, (app.unit * 8.2, app.unit * 1), (app.unit * 1.2, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
+                                  ("Next", app.font, app.unit * 0.3, False, False, Black), lambda: self.nextMatrix())
+        self.confirmButton = Button(app, (app.unit * 8.2, app.unit * 1), (app.unit * 1.2, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
+                                  ("Confirm", app.font, app.unit * 0.3, False, False, Black), lambda: self.calculateMatrix())
+        self.returnButton = Button(app, (app.unit * 9.5, app.unit * 1), (app.unit * 1.2, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
+                                  ("Back", app.font, app.unit * 0.3, False, False, Black), lambda: self.returnMatrix())
+        self.buttons = [self.backButton, self.AMButton, self.SMButton, self.MDButton, self.enterButton]
+        self.textBox1 = TextBox(app, (app.unit * 3.1, app.unit * 1.5), (app.unit * 0.8, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
+                                   (app.font, app.unit * 0.3, False, False, Black))
+        self.textBox2 = TextBox(app, (app.unit * 4.5, app.unit * 1.5), (app.unit * 0.8, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
+                                   (app.font, app.unit * 0.3, False, False, Black))
+        self.textBox3 = TextBox(app, (app.unit * 6.1, app.unit * 1.5), (app.unit * 0.8, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
+                                   (app.font, app.unit * 0.3, False, False, Black))
+        self.textBox4 = TextBox(app, (app.unit * 7.5, app.unit * 1.5), (app.unit * 0.8, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
+                                   (app.font, app.unit * 0.3, False, False, Black))
+        self.textBox = [self.textBox1, self.textBox2]
+        
+        self.buttons[1].appointedColor = Grey
+        self.matrices = []
+        self.scalar = None
+        self.answer = []
+        self.matrixMode = 0
+
+        self.message = 0
+        self.messageRect = 0
+
+
+    def draw(self):
+        self.app.screen.fill(White)
+
+        if(self.matrixMode == 0):
+            if(self.matrices == []):
+                text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter Matrices Dimensions", True, Black)
+                self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
+                text2 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("X", True, Black)
+                self.app.screen.blit(text2, text2.get_rect(center = (self.app.unit * 4.2, self.app.unit * 1.8)))
+            else:
+                if(self.matrices[0][0][0] == None):
+                    text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter the First Matrix", True, Black)
+                else:
+                    text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter the Second Matrix", True, Black)
+                self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
+        elif(self.matrixMode == 1):
+            if(self.matrices == []):
+                text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter Matrix Dimension", True, Black)
+                self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
+                text2 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("X", True, Black)
+                self.app.screen.blit(text2, text2.get_rect(center = (self.app.unit * 4.2, self.app.unit * 1.8)))
+            else:
+                text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter the Matrix and the Scalar", True, Black)
+                self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
+                text2 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("X", True, Black)
+                self.app.screen.blit(text2, text2.get_rect(center = (self.app.unit * (len(self.matrices[0][0]) * 1.1 + 3.5), self.app.unit * (len(self.matrices[0]) * 0.4 + 1.4))))
+        elif(self.matrixMode == 2):
+            if(self.matrices == []):
+                text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter Matrices Dimensions", True, Black)
+                self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
+                text2 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("X", True, Black)
+                self.app.screen.blit(text2, text2.get_rect(center = (self.app.unit * 4.2, self.app.unit * 1.8)))
+                text3 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("X", True, Black)
+                self.app.screen.blit(text3, text3.get_rect(center = (self.app.unit * 7.2, self.app.unit * 1.8)))
+            else:
+                if(self.matrices[0][0][0] == None):
+                    text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter the First Matrix", True, Black)
+                else:
+                    text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter the Second Matrix", True, Black)
+                self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
+
+        for button in self.buttons:
+            button.draw()
+
+        for textbox in self.textBox:
+            textbox.draw()
+
+        if(self.message != 0):
+            self.app.screen.blit(self.message, self.messageRect)
+
+
+    def handleEvent(self, event):
+        for button in self.buttons:
+            button.handleEvent(event)
+        
+        for textbox in self.textBox:
+            textbox.handleEvent(event)
+
+        if(event.type == KEYDOWN and event.key == K_RETURN):
+            if(self.answer == []):
+                if(self.textBox[-1].entering):
+                    self.textBox[-1].entering = False
+                    if(self.matrices == []):
+                        self.confirmDimension()
+                    elif(self.matrices[0][0][0] == None):
+                        if(self.matrixMode == 1):
+                            self.calculateSM()
+                        else:
+                            self.nextMatrix()
+                    else:
+                        self.calculateMatrix()
+                else:
+                    for i in range(len(self.textBox) - 2, -1, -1):
+                        if(self.textBox[i].entering):
+                            self.textBox[i + 1].entering = True
+                            self.textBox[i].entering = False
+
+    
+    def changeMatrixMode(self, mode):
+        if(self.matrixMode != mode):
+            self.matrices = []
+            self.buttons = [self.backButton, self.AMButton, self.SMButton, self.MDButton, self.enterButton]
+            self.buttons[self.matrixMode + 1].appointedColor = None
+            self.matrixMode = mode
+            self.buttons[self.matrixMode + 1].appointedColor = Grey
+            if(mode < 2):
+                self.textBox = [self.textBox1, self.textBox2]
+            else:
+                self.textBox = [self.textBox1, self.textBox2, self.textBox3, self.textBox4]
+
+    
+    def confirmDimension(self):
+        if(self.matrixMode < 2):
+            input = self.processDimension(2)
+            if(input != None):
+                self.message = 0
+                self.matrices.append([[None for j in range(input[1])] for i in range(input[0])])
+                self.appendTextBoxes(0)
+                if(self.matrixMode == 0):
+                    self.matrices.append([[None for j in range(input[1])] for i in range(input[0])])
+                    self.buttons[4] = self.nextButton
+                else:
+                    self.textBox.append(TextBox(self.app, (self.app.unit * (len(self.matrices[0][0]) * 1.1 + 3.8), self.app.unit * (len(self.matrices[0]) * 0.4 + 1.1)), 
+                                                (self.app.unit, self.app.unit * 0.6), (DarkGrey, Black, self.app.unit // 16), (self.app.font, self.app.unit * 0.3, False, False, Black)))
+                    self.buttons[4] = self.confirmButton
+        else:
+            input = self.processDimension(4)
+            if(input != None):
+                if(input[0] != input[3] and input[1] != input[2]):
+                    self.printMessage("Error: Invalid Dimensions For Multiplication")
+                    return
+                self.message = 0
+                self.matrices.append([[None for j in range(input[1])] for i in range(input[0])])
+                self.matrices.append([[None for j in range(input[3])] for i in range(input[2])])
+                self.appendTextBoxes(0)
+                self.buttons[4] = self.nextButton
+        self.buttons.append(self.returnButton)
+
+
+    def nextMatrix(self):
+        textBoxIndex = 0
+        for i in range(len(self.matrices[0])):
+            for j in range(len(self.matrices[0][0])):
+                try:
+                    self.matrices[0][i][j] = eval(self.textBox[textBoxIndex].input)
+                except Exception as e:
+                    self.printMessage(f"Error: {e}")
+                    return
+                textBoxIndex += 1
+        self.appendTextBoxes(1)
+
+
+    def returnMatrix(self):
+        if(self.answer == []):
+            if(self.matrices[0][0][0] == None):
+                self.matrices = []
+                self.buttons = [self.backButton, self.AMButton, self.SMButton, self.MDButton, self.enterButton]
+                self.textBox = [self.textBox1, self.textBox2]
+                if(self.matrixMode == 2):
+                    self.textBox = [self.textBox1, self.textBox2, self.textBox3, self.textBox4]
+            else:
+                self.matrices[0] = [[None for j in range(len(self.matrices[0][0]))] for i in range(len(self.matrices[0]))]
+                self.buttons[4] = self.nextButton
+                self.appendTextBoxes(0)
+        else:
+            self.matrices = []
+            self.answer = []
+            self.buttons = [self.backButton, self.AMButton, self.SMButton, self.MDButton, self.enterButton]
+            self.textBox = [self.textBox1, self.textBox2]
+            if(self.matrixMode == 2):
+                self.textBox = [self.textBox1, self.textBox2, self.textBox3, self.textBox4]
+            
+
+    def appendTextBoxes(self, mode):
+        self.textBox = []
+        for i in range(len(self.matrices[mode])):
+            for j in range(len(self.matrices[mode][0])):
+                self.textBox.append(TextBox(self.app, (self.app.unit * (3.2 + j * 1.1), self.app.unit * (1.5 + i * 0.8)), (self.app.unit, self.app.unit * 0.6), 
+                                            (DarkGrey, Black, self.app.unit // 16), (self.app.font, self.app.unit * 0.3, False, False, Black)))
+                
+
+    def calculateMatrix(self):
+        if(self.matrixMode == 0):
+            self.calculateAM()
+        elif(self.matrixMode == 1):
+            self.calculateSM()
+        else:
+            self.calculateMD()
+
+
+    def calculateAM(self):
+        self.answer = [[None for j in range(len(self.matrices[0][0]))] for i in range(self.matrices[0])]
+        for i in range(len(self.answer)):
+            for j in range(len(self.answer[0])):
+                self.answer[i][j] = self.matrices[0][i][j] + self.matrices[1][i][j]
+
+
+    def calculateSM(self):
+        self.answer = [[None for j in range(len(self.matrices[0][0]))] for i in range(self.matrices[0])]
+
+
+    def calculateMD(self):
+        pass
+
+    
+    def processDimension(self, mode):
+        input = [0 for i in range(mode)]
+        for i in range(mode):
+            try:
+                input[i] = eval(self.textBox[i].input)
+            except Exception as e:
+                self.printMessage(f"Error: {e}")
+                return
+            if(not isinstance(input[i], int)):
+                self.printMessage("Error: Not An Integer")
+                return
+            if(input[i] < 1 or input[i] > 10):
+                self.printMessage("Error: Dimension Out of Range (1-10)")
+                return
+        return input
+
+
+    def printMessage(self, message):
+        self.message = fonts(self.app.font, self.app.unit * 0.3, True, False).render(message, True, Black)
+        self.messageRect = self.message.get_rect()
+        if(self.matrices == []):
+            self.messageRect.midleft = (self.app.unit * 3, self.app.unit * 2.5)
+        else:
+            self.messageRect.midleft = (self.app.unit * 8, self.app.unit * 1)
+
+
+    def toMenu(self):
+        self.app.currentScreen = MenuScreen(self.app)
 
 
 
@@ -39,7 +331,7 @@ class GraphingCalculator:
     def __init__(self, app):
         self.app = app
         self.backButton = Button(app, (app.unit * 0.6, app.unit * 0.6), (app.unit * 0.7, app.unit * 0.7), (White, Grey), (Black, app.unit // 16), 5, 
-                                 ("←", app.font, app.unit * 0.3, False, False, Black), lambda: self.toHomeScreen())
+                                 ("←", app.font, app.unit * 0.3, False, False, Black), lambda: self.toMenu())
         self.enterButton1 = Button(app, (app.unit * 14.5, app.unit * 1.3), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
                                   ("Enter", app.font, app.unit * 0.3, False, False, Black), lambda: self.calculate(self.textBox[0].input))
         self.enterButton2 = Button(app, (app.unit * 9.5, app.unit * 2), (app.unit, app.unit * 0.5), (White, Grey), (Black, app.unit // 16), 1, 
@@ -115,32 +407,7 @@ class GraphingCalculator:
         if(self.displayingGraph):
             self.drawGraph()
             if(self.displayingExtremas):
-                messageMin = fonts(self.app.font, self.app.unit * 0.25, True, False).render("Min", True, Black)
-                messageMax = fonts(self.app.font, self.app.unit * 0.25, True, False).render("Max", True, Black)
-                minRect = messageMin.get_rect()
-                minRect.midtop = (self.app.unit * 2.2, self.app.unit * 3.5)
-                maxRect = messageMax.get_rect()
-                maxRect.midtop = (self.app.unit * 3.8, self.app.unit * 3.5)
-                self.app.screen.blit(messageMin, minRect)
-                self.app.screen.blit(messageMax, maxRect)
-                for i in range(len(self.min)):
-                    if(i < 15):
-                        messageMin = fonts(self.app.font, self.app.unit * 0.2, False, False).render(f"({round(self.min[i][0], 2)},{round(self.min[i][1], 2)})", True, Black)
-                        minRect.midtop = (self.app.unit * 2.2, self.app.unit * 4 + i * 0.5 * self.app.unit)
-                        self.app.screen.blit(messageMin, minRect)
-                    draw.circle(self.app.screen, Green, 
-                            (self.app.unit * 5 + round((self.min[i][0] - self.minX) / (self.maxX - self.minX) * self.app.unit * 6), 
-                             self.app.unit * 2.8 + round((self.maxY - self.min[i][1]) / (self.maxY - self.minY) * self.app.unit * 6)), 
-                             max(1, self.app.unit // 20))
-                for i in range(len(self.max)):
-                    if(i < 15):
-                        messageMax = fonts(self.app.font, self.app.unit * 0.2, False, False).render(f"({round(self.max[i][0], 2)},{round(self.max[i][1], 2)})", True, Black)
-                        maxRect.midtop = (self.app.unit * 3.8, self.app.unit * 4 + i * 0.5 * self.app.unit)
-                        self.app.screen.blit(messageMax, maxRect)
-                    draw.circle(self.app.screen, Blue, 
-                            (self.app.unit * 5 + round((self.max[i][0] - self.minX) / (self.maxX - self.minX) * self.app.unit * 6), 
-                             self.app.unit * 2.8 + round((self.maxY - self.max[i][1]) / (self.maxY - self.minY) * self.app.unit * 6)), 
-                             max(1, self.app.unit // 20))
+                self.drawExtremas()
 
 
     def handleEvent(self, event):
@@ -402,7 +669,6 @@ class GraphingCalculator:
             self.printResult("Graph Zoomed")
             
 
-
     def resetGraph(self):
         self.maxX, self.minX, self.maxY, self.minY = 20, -20, 20, -20
         self.gridSize = 2
@@ -417,5 +683,34 @@ class GraphingCalculator:
             print(self.min, self.max)
 
 
-    def toHomeScreen(self):
-        self.app.currentScreen = HomeScreen(self.app)
+    def drawExtremas(self):
+        messageMin = fonts(self.app.font, self.app.unit * 0.25, True, False).render("Min", True, Black)
+        messageMax = fonts(self.app.font, self.app.unit * 0.25, True, False).render("Max", True, Black)
+        minRect = messageMin.get_rect()
+        minRect.midtop = (self.app.unit * 2.2, self.app.unit * 3.5)
+        maxRect = messageMax.get_rect()
+        maxRect.midtop = (self.app.unit * 3.8, self.app.unit * 3.5)
+        self.app.screen.blit(messageMin, minRect)
+        self.app.screen.blit(messageMax, maxRect)
+        for i in range(len(self.min)):
+            if(i < 15):
+                messageMin = fonts(self.app.font, self.app.unit * 0.2, False, False).render(f"({round(self.min[i][0], 2)},{round(self.min[i][1], 2)})", True, Black)
+                minRect.midtop = (self.app.unit * 2.2, self.app.unit * 4 + i * 0.5 * self.app.unit)
+                self.app.screen.blit(messageMin, minRect)
+            draw.circle(self.app.screen, Green, 
+                    (self.app.unit * 5 + round((self.min[i][0] - self.minX) / (self.maxX - self.minX) * self.app.unit * 6), 
+                     self.app.unit * 2.8 + round((self.maxY - self.min[i][1]) / (self.maxY - self.minY) * self.app.unit * 6)), 
+                     max(1, self.app.unit // 20))
+        for i in range(len(self.max)):
+            if(i < 15):
+                messageMax = fonts(self.app.font, self.app.unit * 0.2, False, False).render(f"({round(self.max[i][0], 2)},{round(self.max[i][1], 2)})", True, Black)
+                maxRect.midtop = (self.app.unit * 3.8, self.app.unit * 4 + i * 0.5 * self.app.unit)
+                self.app.screen.blit(messageMax, maxRect)
+            draw.circle(self.app.screen, Blue, 
+                    (self.app.unit * 5 + round((self.max[i][0] - self.minX) / (self.maxX - self.minX) * self.app.unit * 6), 
+                     self.app.unit * 2.8 + round((self.maxY - self.max[i][1]) / (self.maxY - self.minY) * self.app.unit * 6)), 
+                     max(1, self.app.unit // 20))
+
+
+    def toMenu(self):
+        self.app.currentScreen = MenuScreen(self.app)

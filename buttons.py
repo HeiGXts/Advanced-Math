@@ -7,6 +7,7 @@ class Button:
         self.rect = Rect(0, 0, size[0], size[1])
         self.rect.center = (co[0], co[1])
         self.colors = colors
+        self.appointedColor = None
         self.cIndex = 0
         self.borderColor = border[0]
         self.width = border[1]
@@ -17,7 +18,11 @@ class Button:
         self.hovered = False
 
     def draw(self):
-        draw.rect(self.app.screen, self.colors[self.cIndex], self.rect, border_radius = self.radius)
+        if(self.appointedColor):
+            displayColor = self.appointedColor
+        else:
+            displayColor = self.colors[self.cIndex]
+        draw.rect(self.app.screen, displayColor, self.rect, border_radius = self.radius)
         draw.rect(self.app.screen, self.borderColor, self.rect, width = self.width, border_radius = self.radius)
         self.app.screen.blit(self.text, self.textRect)
 

@@ -24,12 +24,7 @@ class TextBox:
     def handleEvent(self, event):
         if(event.type == MOUSEBUTTONDOWN and event.button == 1):
             self.entering = self.rect.collidepoint(event.pos)
-            if(self.entering):
-                self.color = self.border[1]
-            else:
-                self.color = self.border[0]
-
-        if(event.type == KEYDOWN and self.entering):
+        elif(event.type == KEYDOWN and self.entering):
             self.key = event.unicode
             if((self.key.isdigit() or self.key.isalpha() or self.key == '+' or self.key == '-' or self.key == '*' or self.key == '/' or self.key == '(' or self.key == ')' 
                 or self.key == '!' or self.key == '=' or self.key == '^' or self.key == '%' or self.key == '.' or self.key =='|') 
@@ -40,3 +35,7 @@ class TextBox:
             self.text = fonts(self.textSetting[0], self.textSetting[1], self.textSetting[2], self.textSetting[3]).render(self.input, True, self.textSetting[4])
             self.textRect = self.text.get_rect()
             self.textRect.midleft = (self.co[0] + self.app.unit // 8, self.co[1] + self.size[1] // 2)
+        if(self.entering):
+            self.color = self.border[1]
+        else:
+            self.color = self.border[0]
