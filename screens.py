@@ -100,7 +100,7 @@ class Matrices:
         self.textBox4 = TextBox(app, (app.unit * 7.5, app.unit * 1.5), (app.unit * 0.8, app.unit * 0.6), (DarkGrey, Black, app.unit // 16), 
                                    (app.font, app.unit * 0.3, False, False, Black))
         self.textBox = [self.textBox1, self.textBox2]
-        
+
         self.buttons[1].appointedColor = Grey
         self.matrices = []
         self.scalar = None
@@ -114,6 +114,53 @@ class Matrices:
     def draw(self):
         self.app.screen.fill(White)
 
+        if(self.matrices != []):
+            self.drawBrackets()
+        if(self.answer == []):
+            self.drawMatrixMode()
+        else:
+            text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Matrix Calculation Completed", True, Black)
+            self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
+            for i in range(len(self.answer)):
+                for j in range(len(self.answer[0])):
+                    num = fonts(self.app.font, self.app.unit * 0.2, True, False).render(str(self.answer[i][j]), True, Black)
+                    self.app.screen.blit(num, num.get_rect(center = (self.app.unit * (3.6 + j * 1.1), self.app.unit * (1.8 + i * 0.8))))
+
+        for button in self.buttons:
+            button.draw()
+
+        for textbox in self.textBox:
+            textbox.draw()
+
+        if(self.message != 0):
+            self.app.screen.blit(self.message, self.messageRect)
+
+
+    def handleEvent(self, event):
+        for button in self.buttons:
+            button.handleEvent(event)
+        
+        for textbox in self.textBox:
+            textbox.handleEvent(event)
+
+        if(event.type == KEYDOWN and event.key == K_RETURN):
+            if(self.answer == []):
+                if(self.textBox[-1].entering):
+                    self.textBox[-1].entering = False
+                    if(self.matrices == []):
+                        self.confirmDimension()
+                    elif(self.matrices[0][0][0] == None and self.matrixMode != 1):
+                        self.nextMatrix()
+                    else:
+                        self.calculateMatrix()
+                else:
+                    for i in range(len(self.textBox) - 2, -1, -1):
+                        if(self.textBox[i].entering):
+                            self.textBox[i + 1].entering = True
+                            self.textBox[i].entering = False
+
+
+    def drawMatrixMode(self):
         if(self.matrixMode == 0):
             if(self.matrices == []):
                 text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter Matrices Dimensions", True, Black)
@@ -152,46 +199,49 @@ class Matrices:
                     text1 = fonts(self.app.font, self.app.unit * 0.3, True, False).render("Enter the Second Matrix", True, Black)
                 self.app.screen.blit(text1, text1.get_rect(midleft = (self.app.unit * 3, self.app.unit * 1)))
 
-        for button in self.buttons:
-            button.draw()
 
-        for textbox in self.textBox:
-            textbox.draw()
-
-        if(self.message != 0):
-            self.app.screen.blit(self.message, self.messageRect)
-
-
-    def handleEvent(self, event):
-        for button in self.buttons:
-            button.handleEvent(event)
-        
-        for textbox in self.textBox:
-            textbox.handleEvent(event)
-
-        if(event.type == KEYDOWN and event.key == K_RETURN):
-            if(self.answer == []):
-                if(self.textBox[-1].entering):
-                    self.textBox[-1].entering = False
-                    if(self.matrices == []):
-                        self.confirmDimension()
-                    elif(self.matrices[0][0][0] == None):
-                        if(self.matrixMode == 1):
-                            self.calculateSM()
-                        else:
-                            self.nextMatrix()
-                    else:
-                        self.calculateMatrix()
-                else:
-                    for i in range(len(self.textBox) - 2, -1, -1):
-                        if(self.textBox[i].entering):
-                            self.textBox[i + 1].entering = True
-                            self.textBox[i].entering = False
+    def drawBrackets(self):
+        if(self.answer == []):
+            if(self.matrixMode != 1 and self.matrices[1][0][0] != None):
+                bracketHeight = len(self.matrices[1])
+                bracketWidth = len(self.matrices[1][0])
+            else:
+                bracketHeight = len(self.matrices[0])
+                bracketWidth = len(self.matrices[0][0])
+            draw.line(self.app.screen, Black, (self.app.unit * 3, self.app.unit * 1.4), 
+                    (self.app.unit * 3, self.app.unit * (0.8 * bracketHeight + 1.5)), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * 3, self.app.unit * 1.4), 
+                    (self.app.unit * 3.2, self.app.unit * 1.4), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * 3, self.app.unit * (0.8 * bracketHeight + 1.5)), 
+                    (self.app.unit * 3.2, self.app.unit * (0.8 * bracketHeight + 1.5)), width = self.app.unit // 40)
+            
+            draw.line(self.app.screen, Black, (self.app.unit * (3.3 + bracketWidth * 1.1), self.app.unit * 1.4), 
+                    (self.app.unit * (3.3 + bracketWidth * 1.1), self.app.unit * (0.8 * bracketHeight + 1.5)), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * (3.3 + bracketWidth * 1.1), self.app.unit * 1.4), 
+                    (self.app.unit * (3.1 + bracketWidth * 1.1), self.app.unit * 1.4), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * (3.3 + bracketWidth * 1.1), self.app.unit * (0.8 * bracketHeight + 1.5)), 
+                    (self.app.unit * (3.1 + bracketWidth * 1.1), self.app.unit * (0.8 * bracketHeight + 1.5)), width = self.app.unit // 40)
+        else:
+            draw.line(self.app.screen, Black, (self.app.unit * 3, self.app.unit * 1.4), 
+                    (self.app.unit * 3, self.app.unit * (0.8 * len(self.answer) + 1.5)), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * 3, self.app.unit * 1.4), 
+                    (self.app.unit * 3.2, self.app.unit * 1.4), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * 3, self.app.unit * (0.8 * len(self.answer) + 1.5)), 
+                    (self.app.unit * 3.2, self.app.unit * (0.8 * len(self.answer) + 1.5)), width = self.app.unit // 40)
+            
+            draw.line(self.app.screen, Black, (self.app.unit * (3.3 + len(self.answer[0]) * 1.1), self.app.unit * 1.4), 
+                    (self.app.unit * (3.3 + len(self.answer[0]) * 1.1), self.app.unit * (0.8 * len(self.answer) + 1.5)), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * (3.3 + len(self.answer[0]) * 1.1), self.app.unit * 1.4), 
+                    (self.app.unit * (3.1 + len(self.answer[0]) * 1.1), self.app.unit * 1.4), width = self.app.unit // 40)
+            draw.line(self.app.screen, Black, (self.app.unit * (3.3 + len(self.answer[0]) * 1.1), self.app.unit * (0.8 * len(self.answer) + 1.5)), 
+                    (self.app.unit * (3.1 + len(self.answer[0]) * 1.1), self.app.unit * (0.8 * len(self.answer) + 1.5)), width = self.app.unit // 40)
+            
 
     
     def changeMatrixMode(self, mode):
         if(self.matrixMode != mode):
             self.matrices = []
+            self.answer = []
             self.buttons = [self.backButton, self.AMButton, self.SMButton, self.MDButton, self.enterButton]
             self.buttons[self.matrixMode + 1].appointedColor = None
             self.matrixMode = mode
@@ -203,10 +253,10 @@ class Matrices:
 
     
     def confirmDimension(self):
+        self.message = 0
         if(self.matrixMode < 2):
             input = self.processDimension(2)
             if(input != None):
-                self.message = 0
                 self.matrices.append([[None for j in range(input[1])] for i in range(input[0])])
                 self.appendTextBoxes(0)
                 if(self.matrixMode == 0):
@@ -216,24 +266,27 @@ class Matrices:
                     self.textBox.append(TextBox(self.app, (self.app.unit * (len(self.matrices[0][0]) * 1.1 + 3.8), self.app.unit * (len(self.matrices[0]) * 0.4 + 1.1)), 
                                                 (self.app.unit, self.app.unit * 0.6), (DarkGrey, Black, self.app.unit // 16), (self.app.font, self.app.unit * 0.3, False, False, Black)))
                     self.buttons[4] = self.confirmButton
+                self.buttons.append(self.returnButton)
         else:
             input = self.processDimension(4)
             if(input != None):
-                if(input[0] != input[3] and input[1] != input[2]):
+                if(input[1] != input[2]):
                     self.printMessage("Error: Invalid Dimensions For Multiplication")
                     return
-                self.message = 0
                 self.matrices.append([[None for j in range(input[1])] for i in range(input[0])])
                 self.matrices.append([[None for j in range(input[3])] for i in range(input[2])])
                 self.appendTextBoxes(0)
                 self.buttons[4] = self.nextButton
-        self.buttons.append(self.returnButton)
+                self.buttons.append(self.returnButton)
 
 
     def nextMatrix(self):
         textBoxIndex = 0
         for i in range(len(self.matrices[0])):
             for j in range(len(self.matrices[0][0])):
+                if(self.textBox[textBoxIndex].input == ""):
+                    self.printMessage("Error: Input Incomplete")
+                    return
                 try:
                     self.matrices[0][i][j] = eval(self.textBox[textBoxIndex].input)
                 except Exception as e:
@@ -241,6 +294,7 @@ class Matrices:
                     return
                 textBoxIndex += 1
         self.appendTextBoxes(1)
+        self.buttons[4] = self.confirmButton
 
 
     def returnMatrix(self):
@@ -265,6 +319,7 @@ class Matrices:
             
 
     def appendTextBoxes(self, mode):
+        print(self.matrices)
         self.textBox = []
         for i in range(len(self.matrices[mode])):
             for j in range(len(self.matrices[mode][0])):
@@ -273,32 +328,67 @@ class Matrices:
                 
 
     def calculateMatrix(self):
+        textBoxIndex = 0
+        mode = 1
+        if(self.matrixMode == 1):
+            mode = 0
+        for i in range(len(self.matrices[mode])):
+            for j in range(len(self.matrices[mode][0])):
+                if(self.textBox[textBoxIndex].input == ""):
+                    self.printMessage("Error: Input Incomplete")
+                    return
+                try:
+                    self.matrices[mode][i][j] = eval(self.textBox[textBoxIndex].input)
+                except Exception as e:
+                    self.printMessage(f"Error: {e}")
+                    return
+                textBoxIndex += 1
+
         if(self.matrixMode == 0):
             self.calculateAM()
         elif(self.matrixMode == 1):
+            if(self.textBox[-1].input == ""):
+                self.printMessage("Error: Input Incomplete")
+                return
+            try:
+                self.scalar = eval(self.textBox[-1].input)
+            except Exception as e:
+                self.printMessage(f"Error: {e}")
+                return
             self.calculateSM()
         else:
             self.calculateMD()
+        self.buttons.pop(4)
+        self.textBox = []
 
 
     def calculateAM(self):
-        self.answer = [[None for j in range(len(self.matrices[0][0]))] for i in range(self.matrices[0])]
+        self.answer = [[None for j in range(len(self.matrices[0][0]))] for i in range(len(self.matrices[0]))]
         for i in range(len(self.answer)):
             for j in range(len(self.answer[0])):
                 self.answer[i][j] = self.matrices[0][i][j] + self.matrices[1][i][j]
 
 
     def calculateSM(self):
-        self.answer = [[None for j in range(len(self.matrices[0][0]))] for i in range(self.matrices[0])]
-
+        self.answer = [[None for j in range(len(self.matrices[0][0]))] for i in range(len(self.matrices[0]))]
+        for i in range(len(self.answer)):
+            for j in range(len(self.answer[0])):
+                self.answer[i][j] = self.matrices[0][i][j] * self.scalar
 
     def calculateMD(self):
-        pass
+        self.answer = [[0 for j in range(len(self.matrices[1][0]))] for i in range(len(self.matrices[0]))]
+        for i in range(len(self.answer)):
+            for j in range(len(self.answer[0])):
+                for k in range(len(self.matrices[0][i])):
+                    self.answer[i][j] += self.matrices[0][i][k] * self.matrices[1][k][j]
 
     
     def processDimension(self, mode):
         input = [0 for i in range(mode)]
         for i in range(mode):
+            if(self.textBox[i].input == ""):
+                self.printMessage("Error: Input Incomplete")
+                return
             try:
                 input[i] = eval(self.textBox[i].input)
             except Exception as e:
@@ -310,6 +400,7 @@ class Matrices:
             if(input[i] < 1 or input[i] > 10):
                 self.printMessage("Error: Dimension Out of Range (1-10)")
                 return
+        print(input)
         return input
 
 
@@ -319,7 +410,7 @@ class Matrices:
         if(self.matrices == []):
             self.messageRect.midleft = (self.app.unit * 3, self.app.unit * 2.5)
         else:
-            self.messageRect.midleft = (self.app.unit * 8, self.app.unit * 1)
+            self.messageRect.midleft = (self.app.unit * 7, self.app.unit * 0.5)
 
 
     def toMenu(self):
